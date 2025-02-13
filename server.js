@@ -6,11 +6,23 @@ const { Chess } = require("chess.js");
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: "*" } });
+const io = new Server(server, {
+  cors: {
+    origin: process.env.FRONTEND_URL || "*", 
+    methods: ["GET", "POST"],
+  },
+});
 
 const games = {}; // Store active games
 
+// Middleware
 app.use(cors());
+app.use(express.json());
+
+// Root route for testing
+app.get("/", (req, res) => {
+  res.send("Chess Server is Running!");
+});
 
 io.on("connection", (socket) => {
   console.log("New player connected:", socket.id);
@@ -25,7 +37,6 @@ io.on("connection", (socket) => {
 
     const game = games[gameId];
 
-    // Assign player colors
     if (!game.players.white) {
       game.players.white = socket.id;
       socket.emit("playerColor", "w");
@@ -74,4 +85,6 @@ io.on("connection", (socket) => {
   });
 });
 
-server.listen(5001, () => console.log("Server running on port 5001"));
+// Use process.env.PORT for Render
+const PORT = process.env.PORT || 5001;
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
