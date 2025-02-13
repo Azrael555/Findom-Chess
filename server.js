@@ -87,4 +87,8 @@ io.on("connection", (socket) => {
 
 // Use process.env.PORT for Render
 const PORT = process.env.PORT || 5001;
+// Prevent serving frontend
+app.get("*", (req, res) => {
+  res.status(404).send("Backend only. No frontend here.");
+});
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
