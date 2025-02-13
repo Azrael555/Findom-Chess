@@ -1,0 +1,167 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+
+/* Background */
+body {
+  background: url('/backgrounds/background.gif') no-repeat center center fixed; /*replace with wanted background*/
+  background-size: cover;
+  color: white;
+  font-family: Arial, sans-serif;
+}
+
+/* Main container for game and lobby */
+.game-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100vh;
+  justify-content: center;
+}
+
+/* Chessboard styling */
+.chessboard {
+  margin-top: 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
+/* Game selection screen */
+.lobby-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  text-align: center;
+}
+
+.lobby-container h1 {
+  font-size: 2rem;
+  margin-bottom: 20px;
+  font-weight: bold;
+}
+
+.lobby-button {
+  background-color: #e63946;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 6px;
+  margin: 10px;
+  transition: background 0.3s ease-in-out;
+}
+
+.lobby-button:hover {
+  background-color: #b71c1c;
+}
+
+.lobby-input {
+  padding: 10px;
+  border-radius: 6px;
+  border: none;
+  text-align: center;
+  color: black;
+  margin-bottom: 10px;
+}
+
+/* Chatbox */
+.chatbox {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  width: 280px;
+  max-height: 300px;
+  background: rgba(34, 34, 34, 0.9);
+  padding: 10px;
+  border-radius: 8px;
+  color: white;
+  overflow-y: auto;
+}
+
+.chatbox h4 {
+  font-size: 1rem;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.chat-messages {
+  max-height: 200px;
+  overflow-y: auto;
+  padding-right: 5px;
+  scrollbar-width: thin;
+}
+
+.chat-messages::-webkit-scrollbar {
+  width: 5px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 4px;
+}
+
+.chat-input {
+  width: 100%;
+  padding: 8px;
+  border-radius: 6px;
+  border: none;
+  color: black;
+  margin-top: 5px;
+}
+
+.chat-button {
+  width: 100%;
+  margin-top: 5px;
+  padding: 8px;
+  background: #4a90e2;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.chat-button:hover {
+  background: #357ab7;
+}
+
+/* Game Status */
+.game-status {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+/* Spectator and Player Labels */
+.spectator {
+  color: #ffd700;
+}
+
+.white-player {
+  color: #ffffff;
+}
+
+.black-player {
+  color: #000000;
+  background-color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+  .chatbox {
+    width: 90%;
+    right: 5%;
+  }
+}
