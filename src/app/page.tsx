@@ -3,20 +3,21 @@
 import { useEffect, useState, useRef } from "react";
 import { io } from "socket.io-client";
 import { Chess } from "chess.js";
+import { Suspense } from "react";
 import { Chessboard } from "react-chessboard";
-import { useSearchParams, useRouter } from "next/navigation";
 import Slideshow from "./slideshow";
+import SearchParamsComponent from "./SearchParamsComponent";
+import { useRouter } from "next/navigation";
 
 const socket = io("http://localhost:5001");
 
 const ChessGame = () => {
-  const searchParams = useSearchParams();
   const router = useRouter();
   const [chess] = useState(new Chess());
   const [fen, setFen] = useState(chess.fen());
-  const [gameId, setGameId] = useState(searchParams.get("gameId") || null);
+  const [gameId, setGameId] = useState(null);
   const [playerColor, setPlayerColor] = useState(null);
-  const [username, setUsername] = useState("User ");
+  const [username, setUsername] = useState("User");
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState("");
   const [gameOver, setGameOver] = useState(null);
@@ -26,7 +27,6 @@ const ChessGame = () => {
   const [typingUser, setTypingUser] = useState("");
   const [fromSquare, setFromSquare] = useState(null); // For click-to-move
   const chatEndRef = useRef(null);
-
   const typingTimeoutRef = useRef(null);
 
   const leftImages = ["/left/left1.jpg", "/left/left2.jpg", "/left/left3.jpg", "/left/left4.jpg", "/left/left5.jpg"];
@@ -71,15 +71,22 @@ const ChessGame = () => {
     };
   }, [audio]);
 
+  // Handle game initialization and joining
   useEffect(() => {
-    if (!gameId) {
-      const newGameId = Math.random().toString(36).substring(2, 10);
-      setGameId(newGameId);
-      router.push(`/?gameId=${newGameId}`);
-    } else {
-      socket.emit("joinGame", gameId);
-    }
+  const params = new URLSearchParams(window.location.search);
+  const urlGameId = params.get("gameId");
 
+  if (urlGameId) {
+    setGameId(urlGameId);
+    socket.emit("joinGame", urlGameId);
+  } else {
+    const newGameId = Math.random().toString(36).substring(2, 10);
+    setGameId(newGameId);
+    router.push(`/?gameId=${newGameId}`);
+    socket.emit("joinGame", newGameId);
+  }
+
+    // Socket event listeners
     socket.on("playerColor", (color) => {
       setPlayerColor(color);
       setUsername(color === "w" ? "Goddess" : "Subject");
@@ -112,17 +119,14 @@ const ChessGame = () => {
       setTypingUser(user);
       setIsTyping(true);
 
-      // Clear any existing timeout before setting a new one
       if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-     }
+        clearTimeout(typingTimeoutRef.current);
+      }
 
-  // Hide "is typing" after 2 seconds
-  typingTimeoutRef.current = setTimeout(() => {
-    setIsTyping(false);
-  }, 2000);
-});
-
+      typingTimeoutRef.current = setTimeout(() => {
+        setIsTyping(false);
+      }, 2000);
+    });
 
     return () => {
       socket.off("gameState");
@@ -132,8 +136,9 @@ const ChessGame = () => {
       socket.off("chatMessage");
       socket.off("typing");
     };
-  }, [gameId]);
+  }, []);
 
+  // Slideshow interval
   useEffect(() => {
     const interval = setInterval(() => {
       setLeftImageIndex((prev) => (prev + 1) % leftImages.length);
@@ -210,53 +215,40 @@ const ChessGame = () => {
   const handleKeyDown = (event) => {
     if (event.key === "Enter") {
       sendMessage();
-    } 
+    }
   };
 
+  const handleTyping = () => {
+    socket.emit("typing", username);
 
-const handleTyping = () => {
-  socket.emit("typing", username);
-  console.log("user typing should be thereee")
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
 
-
-  // Clear previous timeout if exists
-  if (typingTimeoutRef.current) {
-    clearTimeout(typingTimeoutRef.current);
-  }
-
-  // Hide "is typing" after 2 seconds
-  typingTimeoutRef.current = setTimeout(() => {
-    setIsTyping(false);
-  }, 2000);
-};
-
-
+    typingTimeoutRef.current = setTimeout(() => {
+      setIsTyping(false);
+    }, 2000);
+  };
 
   const handleSquareClick = (square) => {
-  const piece = chess.get(square);
+    const piece = chess.get(square);
 
-  if (fromSquare === null) {
-    // First selection: Ensure the clicked square has a piece of the player's color
-    if (piece && piece.color === playerColor) {
-      setFromSquare(square);
-    }
-  } else {
-    if (square === fromSquare) {
-      // Clicking the same square deselects the piece
-      setFromSquare(null);
-    } else if (piece && piece.color === playerColor) {
-      // Selecting another piece of the same color updates selection
-      setFromSquare(square);
+    if (fromSquare === null) {
+      if (piece && piece.color === playerColor) {
+        setFromSquare(square);
+      }
     } else {
-      // Attempt move through handleMove
-      const move = { from: fromSquare, to: square, promotion: "q" };
-      handleMove(move);
-      setFromSquare(null);
+      if (square === fromSquare) {
+        setFromSquare(null);
+      } else if (piece && piece.color === playerColor) {
+        setFromSquare(square);
+      } else {
+        const move = { from: fromSquare, to: square, promotion: "q" };
+        handleMove(move);
+        setFromSquare(null);
+      }
     }
-  }
-};
-
-
+  };
 
   useEffect(() => {
     if (chatEndRef.current) {
@@ -273,6 +265,9 @@ const handleTyping = () => {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", height: "100vh", justifyContent: "center" }}>
+      <Suspense fallback={<p>Loading game...</p>}>
+        <SearchParamsComponent setGameId={setGameId} />
+      </Suspense>
       <div style={{ position: "absolute", top: "10px", textAlign: "center" }}>
         <h2>Online Chess Game</h2>
         <p style={getPlayerColorStyle()}>Game ID: {gameId}</p>
@@ -313,40 +308,6 @@ const handleTyping = () => {
             blankDuration={10}
           />
 
-
-           <Slideshow
-            images={rightImages}
-            position={{ top: "0%", right: "0%" }}
-            size={{ width: "50vh", height: "75vh" }}
-            opacityLevels={{ visible: 0, hidden: 0 }}
-            fadeDuration={3}
-            blankDuration={10}
-          />
-
-
-
-           <Slideshow
-            images={rightImages}
-            position={{ top: "0%", right: "0%" }}
-            size={{ width: "50vh", height: "75vh" }}
-            opacityLevels={{ visible: 0, hidden: 0 }}
-            fadeDuration={3}
-            blankDuration={10}
-          />
-
-
-           <Slideshow
-            images={rightImages}
-            position={{ top: "0%", right: "0%" }}
-            size={{ width: "50vh", height: "75vh" }}
-            opacityLevels={{ visible: 0, hidden: 0 }}
-            fadeDuration={3}
-            blankDuration={10}
-          />
-
-
-
-
           {/* Right Slideshow */}
           <Slideshow
             images={rightImages}
@@ -356,38 +317,6 @@ const handleTyping = () => {
             fadeDuration={3}
             blankDuration={10}
           />
-
-           <Slideshow
-            images={rightImages}
-            position={{ top: "0%", right: "0%" }}
-            size={{ width: "50vh", height: "75vh" }}
-            opacityLevels={{ visible: 0, hidden: 0 }}
-            fadeDuration={3}
-            blankDuration={10}
-          />
-
-           <Slideshow
-            images={rightImages}
-            position={{ top: "0%", right: "0%" }}
-            size={{ width: "50vh", height: "75vh" }}
-            opacityLevels={{ visible: 0, hidden: 0 }}
-            fadeDuration={3}
-            blankDuration={10}
-          />
-
-
-           <Slideshow
-            images={rightImages}
-            position={{ top: "0%", right: "0%" }}
-            size={{ width: "50vh", height: "75vh" }}
-            opacityLevels={{ visible: 0, hidden: 0 }}
-            fadeDuration={3}
-            blankDuration={10}
-          />
-
-
-
-
 
           {/* Chessboard */}
           <div
@@ -454,9 +383,8 @@ const handleTyping = () => {
           type="text"
           value={message}
           onChange={(e) => {
-            setMessage(e.target.value)
+            setMessage(e.target.value);
             handleTyping();
-
           }}
           onKeyDown={handleKeyDown}
           placeholder="Type a message..."
