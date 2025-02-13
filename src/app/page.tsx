@@ -9,7 +9,7 @@ import Slideshow from "./slideshow";
 import SearchParamsComponent from "./SearchParamsComponent";
 import { useRouter } from "next/navigation";
 
-const socket = io("https://your-backend.onrender.com", {
+const socket = io("https://findom-chess.onrender.com", {
   transports: ["websocket"], 
 });
 
