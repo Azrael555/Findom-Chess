@@ -300,25 +300,130 @@ const ChessGame = () => {
         </div>
       ) : (
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-          {/* Left Slideshow */}
+
+
+
+
+            {/* Left Slideshow */}
           <Slideshow
             images={leftImages}
             position={{ top: "0%", left: "0%" }}
-            size={{ width: "50vh", height: "75vh" }}
-            opacityLevels={{ visible: 1, hidden: 0 }}
-            fadeDuration={3}
-            blankDuration={10}
+            size={{ width: "25vh", height: "37.5vh" }}
+            opacityLevels={{ visible: 0.45, hidden: 0 }}
+            fadeDuration={1.5}
+            blankDuration={10.5}
           />
+
+          <Slideshow
+            images={leftImages}
+            position={{ top: "20%", left: "17.5%" }}
+            size={{ width: "40vh", height: "60vh" }}
+            opacityLevels={{ visible: 0.55, hidden: 0 }}
+            fadeDuration={1}
+            blankDuration={9.5}
+          />
+
+          <Slideshow
+            images={leftImages}
+            position={{ top: "64%", left: "0%" }}
+            size={{ width: "24vh", height: "36vh" }}
+            opacityLevels={{ visible: 0.7, hidden: 0 }}
+            fadeDuration={1.75}
+            blankDuration={8}
+          />
+
+          <Slideshow
+            images={leftImages}
+            position={{ top: "18.25%", left: "6.25%" }}
+            size={{ width: "42.5vh", height: "63.75vh" }}
+            opacityLevels={{ visible: 0.9, hidden: 0 }}
+            fadeDuration={1.8}
+            blankDuration={5}
+          />
+
+          <Slideshow
+           images={leftImages}
+           position={{ top: "78%", left: "30.25%" }}
+           size={{ width: "15vh", height: "22.5vh" }}
+           opacityLevels={{ visible: 0.5, hidden: 0 }}
+           fadeDuration={1.8}
+           blankDuration={5}
+          />
+
+          <Slideshow
+           images={leftImages}
+           position={{ top: "3%", left: "30.75%" }}
+           size={{ width: "15vh", height: "22.5vh" }}
+           opacityLevels={{ visible: 0.5, hidden: 0 }}
+           fadeDuration={1.8}
+           blankDuration={5}
+          />
+
+          
+
+      
+
+ 
 
           {/* Right Slideshow */}
           <Slideshow
             images={rightImages}
-            position={{ top: "0%", right: "0%" }}
-            size={{ width: "50vh", height: "75vh" }}
-            opacityLevels={{ visible: 0, hidden: 0 }}
-            fadeDuration={3}
-            blankDuration={10}
+            position={{ top: "0%", left: "86%" }}
+            size={{ width: "28vh", height: "42vh" }}
+            opacityLevels={{ visible: 0.45, hidden: 0 }}
+            fadeDuration={1.43}
+            blankDuration={8.2}
           />
+
+              
+          <Slideshow
+            images={rightImages}
+            position={{ top: "15%", left: "62%" }}
+            size={{ width: "33vh", height: "49.5vh" }}
+            opacityLevels={{ visible: 0.5, hidden: 0 }}
+            fadeDuration={1.15}
+            blankDuration={7.25}
+          />
+
+          <Slideshow
+            images={rightImages}
+            position={{ top: "63%", left: "80%" }}
+            size={{ width: "20vh", height: "30vh" }}
+            opacityLevels={{ visible: 0.4, hidden: 0 }}
+            fadeDuration={1.75}
+            blankDuration={11}
+          />
+
+
+
+          <Slideshow
+            images={rightImages}
+            position={{ top: "18.25%", left: "68%" }}
+            size={{ width: "42.5vh", height: "63.75vh" }}
+            opacityLevels={{ visible: 0.92, hidden: 0 }}
+            fadeDuration={1.75}
+            blankDuration={5.3}
+          />
+
+          <Slideshow
+           images={rightImages}
+           position={{ top: "2.85%", left: "58.25%" }}
+           size={{ width: "14vh", height: "21vh" }}
+           opacityLevels={{ visible: 0.5, hidden: 0 }}
+           fadeDuration={1.3}
+           blankDuration={9.7}
+          />
+
+          <Slideshow
+           images={rightImages}
+           position={{ top: "77%", left: "58.25%" }}
+           size={{ width: "14vh", height: "21vh" }}
+           opacityLevels={{ visible: 0.57, hidden: 0 }}
+           fadeDuration={1.33}
+           blankDuration={9.3}
+          />
+
+
 
           {/* Chessboard */}
           <div
