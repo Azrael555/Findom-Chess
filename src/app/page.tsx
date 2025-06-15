@@ -9,7 +9,7 @@ import Slideshow from "./slideshow";
 import SearchParamsComponent from "./SearchParamsComponent";
 import { useRouter } from "next/navigation";
 
-const socket = io("http://localhost:5001");
+const socket = io("https://findom-chess.onrender.com");
 
 const ChessGame = () => {
   const router = useRouter();
@@ -32,8 +32,8 @@ const ChessGame = () => {
   // NEW: State for controlling slideshow visibility (only for white/Goddess)
   const [showSlideshows, setShowSlideshows] = useState(false);
 
-  const leftImages = ["/left/left1.jpg", "/left/left2.jpg", "/left/left3.jpg", "/left/left4.jpg", "/left/left5.jpg", "/backgrounds/background.gif"];
-  const rightImages = ["/right/right1.jpg", "/right/right2.jpg", "/right/right3.jpg", "/right/right4.jpg", "/right/right5.jpg"];
+  const leftImages = ["/left/left1.jpg", "/left/left2.gif", "/left/left3.gif", "/left/left4.gif", "/left/left5.gif"];
+  const rightImages = ["/right/right1.gif", "/right/right2.gif", "/right/right3.jpg", "/right/right4.gif", "/right/right5.gif"];
   const [leftImageIndex, setLeftImageIndex] = useState(0);
   const [rightImageIndex, setRightImageIndex] = useState(0);
 
