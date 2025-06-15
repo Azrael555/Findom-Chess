@@ -297,10 +297,12 @@ const ChessGame = () => {
         display: "flex", 
         flexDirection: "column", 
         alignItems: "center", 
-        height: "120vh", 
+        height: "100vh", 
         justifyContent: "center",
         // NEW: Conditional background based on slideshow visibility
         backgroundColor: shouldShowSlideshows() ? "transparent" : "#2a2a2a"
+        overflow: "hidden", // NEW
+        position: "relative" // NEW
       }}
     >
       <Suspense fallback={<p>Loading game...</p>}>
@@ -359,7 +361,7 @@ const ChessGame = () => {
           
           {/* NEW: Conditionally render slideshows */}
           {shouldShowSlideshows() && (
-            <>
+            <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }}>
               {/* Left Slideshow */}
               <Slideshow
                 images={leftImages}
