@@ -31,8 +31,8 @@ const ChessGame = () => {
   const chatEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
 
-  const leftImages = ["/left/left1.jpg", "/left/left2.jpg", "/left/left3.jpg", "/left/left4.jpg", "/left/left5.jpg"];
-  const rightImages = ["/right/right1.jpg", "/right/right2.jpg", "/right/right3.jpg", "/right/right4.jpg", "/right/right5.jpg"];
+  const leftImages = ["/left/left1.jpg", "/left/left2.gif", "/left/left3.gif", "/left/left4.gif", "/left/left5.gif"];
+  const rightImages = ["/right/right1.gif", "/right/right2.gif", "/right/right3.gif", "/right/right4.gif", "/right/right5.gif"];
   const [leftImageIndex, setLeftImageIndex] = useState(0);
   const [rightImageIndex, setRightImageIndex] = useState(0);
 
@@ -271,7 +271,7 @@ const ChessGame = () => {
         <SearchParamsComponent setGameId={setGameId} />
       </Suspense>
       <div style={{ position: "absolute", top: "10px", textAlign: "center" }}>
-        <h2>Online Chess Game</h2>
+        <h2>Azrael's Chess Game</h2>
         <p style={getPlayerColorStyle()}>Game ID: {gameId}</p>
         <p style={getPlayerColorStyle()}>
           You are: {playerColor === "spectator" ? username : playerColor === "w" ? "Goddess" : "Subject"}
