@@ -9,9 +9,7 @@ import Slideshow from "./slideshow";
 import SearchParamsComponent from "./SearchParamsComponent";
 import { useRouter } from "next/navigation";
 
-const socket = io("https://findom-chess.onrender.com", {
-  transports: ["websocket"], 
-});
+const socket = io("http://localhost:5001");
 
 const ChessGame = () => {
   const router = useRouter();
@@ -31,8 +29,10 @@ const ChessGame = () => {
   const chatEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
 
+  const [showSlideshows, setShowSlideshows] = useState(false);
+
   const leftImages = ["/left/left1.jpg", "/left/left2.gif", "/left/left3.gif", "/left/left4.gif", "/left/left5.gif"];
-  const rightImages = ["/right/right1.gif", "/right/right2.gif", "/right/right3.gif", "/right/right4.gif", "/right/right5.gif"];
+  const rightImages = ["/right/right1.gif", "/right/right2.gif", "/right/right3.jpg", "/right/right4.gif", "/right/right5.gif"];
   const [leftImageIndex, setLeftImageIndex] = useState(0);
   const [rightImageIndex, setRightImageIndex] = useState(0);
 
@@ -43,11 +43,11 @@ const ChessGame = () => {
   useEffect(() => {
     const newAudio = new Audio("/audios/audio.mp3");
     newAudio.loop = true;
-    newAudio.volume = 0.5;
+    newAudio.volume = 0.01;
     setAudio(newAudio);
 
     const newCheckAudio = new Audio("/audios/check.mp3");
-    newCheckAudio.volume = 1.0;
+    newCheckAudio.volume = 0.4;
     setCheckAudio(newCheckAudio);
   }, []);
 
@@ -92,11 +92,15 @@ const ChessGame = () => {
     socket.on("playerColor", (color) => {
       setPlayerColor(color);
       setUsername(color === "w" ? "Goddess" : "Subject");
+      // NEW: Show slideshows by default for black player, hide for white
+      setShowSlideshows(color === "b");
     });
 
     socket.on("spectator", () => {
       setPlayerColor("spectator");
       setUsername(`Spectator ${Math.floor(Math.random() * 1000)}`);
+      // NEW: Show slideshows for spectators
+      setShowSlideshows(true);
     });
 
     socket.on("gameState", (newFen) => {
@@ -197,11 +201,19 @@ const ChessGame = () => {
       const kingSquare = chess.turn() === "w" ? whiteKingSquare : blackKingSquare;
       setKingInCheckSquare(kingSquare);
 
-      if (checkAudio) {
-        checkAudio.play().catch((error) => {
-          console.error("Check audio playback error:", error);
-        });
-      }
+      const kingInCheckColor = chess.turn(); // The player whose turn it is now is in check
+      const opponentColor = kingInCheckColor === "w" ? "b" : "w"; // The player who gave check
+
+      console.log("🔍 King in check color:", kingInCheckColor);
+      console.log("🎭 Player color:", playerColor);
+
+        // Play check sound for BOTH players
+        if (playerColor === kingInCheckColor || playerColor === opponentColor) {  
+            console.log(`🔊 Playing check sound for ${playerColor.toUpperCase()}!`);
+            checkAudio?.play()
+            .then(() => console.log("✅ Audio played successfully!"))
+            .catch((error) => console.error("❌ Audio playback failed:", error));
+        }
     } else {
       setKingInCheckSquare(null);
     }
@@ -265,8 +277,32 @@ const ChessGame = () => {
     return {};
   };
 
+  // NEW: Function to toggle slideshow visibility
+  const toggleSlideshows = () => {
+    setShowSlideshows(!showSlideshows);
+  };
+
+  // NEW: Determine if slideshows should be rendered
+  const shouldShowSlideshows = () => {
+    // Always show for black player and spectators
+    if (playerColor === "b" || playerColor === "spectator") return true;
+    // For white player (Goddess), only show if toggle is enabled
+    if (playerColor === "w") return showSlideshows;
+    return false;
+  };
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", height: "100vh", justifyContent: "center" }}>
+    <div 
+      style={{ 
+        display: "flex", 
+        flexDirection: "column", 
+        alignItems: "center", 
+        height: "100vh", 
+        justifyContent: "center",
+        // NEW: Conditional background based on slideshow visibility
+        backgroundColor: shouldShowSlideshows() ? "transparent" : "#2a2a2a"
+      }}
+    >
       <Suspense fallback={<p>Loading game...</p>}>
         <SearchParamsComponent setGameId={setGameId} />
       </Suspense>
@@ -276,6 +312,26 @@ const ChessGame = () => {
         <p style={getPlayerColorStyle()}>
           You are: {playerColor === "spectator" ? username : playerColor === "w" ? "Goddess" : "Subject"}
         </p>
+        
+        {/*  Toggle button for white player only */}
+        {playerColor === "w" && (
+          <button
+            onClick={toggleSlideshows}
+            style={{
+              padding: "8px 16px",
+              backgroundColor: showSlideshows ? "#ff6b6b" : "#4ecdc4",
+              color: "white",
+              border: "none",
+              borderRadius: "5px",
+              cursor: "pointer",
+              marginTop: "10px",
+              fontSize: "12px",
+              fontWeight: "bold"
+            }}
+          >
+            {showSlideshows ? "Hide" : "Show"}
+          </button>
+        )}
       </div>
 
       {gameOver ? (
@@ -300,130 +356,121 @@ const ChessGame = () => {
         </div>
       ) : (
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-
-
-
-
-            {/* Left Slideshow */}
-          <Slideshow
-            images={leftImages}
-            position={{ top: "0%", left: "0%" }}
-            size={{ width: "25vh", height: "37.5vh" }}
-            opacityLevels={{ visible: 0.45, hidden: 0 }}
-            fadeDuration={1.5}
-            blankDuration={10.5}
-          />
-
-          <Slideshow
-            images={leftImages}
-            position={{ top: "20%", left: "17.5%" }}
-            size={{ width: "40vh", height: "60vh" }}
-            opacityLevels={{ visible: 0.55, hidden: 0 }}
-            fadeDuration={1}
-            blankDuration={9.5}
-          />
-
-          <Slideshow
-            images={leftImages}
-            position={{ top: "64%", left: "0%" }}
-            size={{ width: "24vh", height: "36vh" }}
-            opacityLevels={{ visible: 0.7, hidden: 0 }}
-            fadeDuration={1.75}
-            blankDuration={8}
-          />
-
-          <Slideshow
-            images={leftImages}
-            position={{ top: "18.25%", left: "6.25%" }}
-            size={{ width: "42.5vh", height: "63.75vh" }}
-            opacityLevels={{ visible: 0.9, hidden: 0 }}
-            fadeDuration={1.8}
-            blankDuration={5}
-          />
-
-          <Slideshow
-           images={leftImages}
-           position={{ top: "78%", left: "30.25%" }}
-           size={{ width: "15vh", height: "22.5vh" }}
-           opacityLevels={{ visible: 0.5, hidden: 0 }}
-           fadeDuration={1.8}
-           blankDuration={5}
-          />
-
-          <Slideshow
-           images={leftImages}
-           position={{ top: "3%", left: "30.75%" }}
-           size={{ width: "15vh", height: "22.5vh" }}
-           opacityLevels={{ visible: 0.5, hidden: 0 }}
-           fadeDuration={1.8}
-           blankDuration={5}
-          />
-
           
+          {/* NEW: Conditionally render slideshows */}
+          {shouldShowSlideshows() && (
+            <>
+              {/* Left Slideshow */}
+              <Slideshow
+                images={leftImages}
+                position={{ top: "0%", left: "0%" }}
+                size={{ width: "25vh", height: "37.5vh" }}
+                opacityLevels={{ visible: 0.45, hidden: 0 }}
+                fadeDuration={1.5}
+                blankDuration={10.5}
+              />
 
-      
+              <Slideshow
+                images={leftImages}
+                position={{ top: "20%", left: "17.5%" }}
+                size={{ width: "40vh", height: "60vh" }}
+                opacityLevels={{ visible: 0.55, hidden: 0 }}
+                fadeDuration={1}
+                blankDuration={9.5}
+              />
 
- 
+              <Slideshow
+                images={leftImages}
+                position={{ top: "64%", left: "0%" }}
+                size={{ width: "24vh", height: "36vh" }}
+                opacityLevels={{ visible: 0.7, hidden: 0 }}
+                fadeDuration={1.75}
+                blankDuration={8}
+              />
 
-          {/* Right Slideshow */}
-          <Slideshow
-            images={rightImages}
-            position={{ top: "0%", left: "86%" }}
-            size={{ width: "28vh", height: "42vh" }}
-            opacityLevels={{ visible: 0.45, hidden: 0 }}
-            fadeDuration={1.43}
-            blankDuration={8.2}
-          />
+              <Slideshow
+                images={leftImages}
+                position={{ top: "18.25%", left: "6.25%" }}
+                size={{ width: "42.5vh", height: "63.75vh" }}
+                opacityLevels={{ visible: 0.9, hidden: 0 }}
+                fadeDuration={1.8}
+                blankDuration={5}
+              />
 
-              
-          <Slideshow
-            images={rightImages}
-            position={{ top: "15%", left: "62%" }}
-            size={{ width: "33vh", height: "49.5vh" }}
-            opacityLevels={{ visible: 0.5, hidden: 0 }}
-            fadeDuration={1.15}
-            blankDuration={7.25}
-          />
+              <Slideshow
+               images={leftImages}
+               position={{ top: "78%", left: "30.25%" }}
+               size={{ width: "15vh", height: "22.5vh" }}
+               opacityLevels={{ visible: 0.5, hidden: 0 }}
+               fadeDuration={1.8}
+               blankDuration={5}
+              />
 
-          <Slideshow
-            images={rightImages}
-            position={{ top: "63%", left: "80%" }}
-            size={{ width: "20vh", height: "30vh" }}
-            opacityLevels={{ visible: 0.4, hidden: 0 }}
-            fadeDuration={1.75}
-            blankDuration={11}
-          />
+              <Slideshow
+               images={leftImages}
+               position={{ top: "3%", left: "30.75%" }}
+               size={{ width: "15vh", height: "22.5vh" }}
+               opacityLevels={{ visible: 0.5, hidden: 0 }}
+               fadeDuration={1.8}
+               blankDuration={5}
+              />
 
+              {/* Right Slideshow */}
+              <Slideshow
+                images={rightImages}
+                position={{ top: "0%", left: "86%" }}
+                size={{ width: "28vh", height: "42vh" }}
+                opacityLevels={{ visible: 0.45, hidden: 0 }}
+                fadeDuration={1.43}
+                blankDuration={8.2}
+              />
 
+              <Slideshow
+                images={rightImages}
+                position={{ top: "15%", left: "62%" }}
+                size={{ width: "33vh", height: "49.5vh" }}
+                opacityLevels={{ visible: 0.5, hidden: 0 }}
+                fadeDuration={1.15}
+                blankDuration={7.25}
+              />
 
-          <Slideshow
-            images={rightImages}
-            position={{ top: "18.25%", left: "68%" }}
-            size={{ width: "42.5vh", height: "63.75vh" }}
-            opacityLevels={{ visible: 0.92, hidden: 0 }}
-            fadeDuration={1.75}
-            blankDuration={5.3}
-          />
+              <Slideshow
+                images={rightImages}
+                position={{ top: "63%", left: "80%" }}
+                size={{ width: "20vh", height: "30vh" }}
+                opacityLevels={{ visible: 0.4, hidden: 0 }}
+                fadeDuration={1.75}
+                blankDuration={11}
+              />
 
-          <Slideshow
-           images={rightImages}
-           position={{ top: "2.85%", left: "58.25%" }}
-           size={{ width: "14vh", height: "21vh" }}
-           opacityLevels={{ visible: 0.5, hidden: 0 }}
-           fadeDuration={1.3}
-           blankDuration={9.7}
-          />
+              <Slideshow
+                images={rightImages}
+                position={{ top: "18.25%", left: "68%" }}
+                size={{ width: "42.5vh", height: "63.75vh" }}
+                opacityLevels={{ visible: 0.92, hidden: 0 }}
+                fadeDuration={1.75}
+                blankDuration={5.3}
+              />
 
-          <Slideshow
-           images={rightImages}
-           position={{ top: "77%", left: "58.25%" }}
-           size={{ width: "14vh", height: "21vh" }}
-           opacityLevels={{ visible: 0.57, hidden: 0 }}
-           fadeDuration={1.33}
-           blankDuration={9.3}
-          />
+              <Slideshow
+               images={rightImages}
+               position={{ top: "2.85%", left: "58.25%" }}
+               size={{ width: "14vh", height: "21vh" }}
+               opacityLevels={{ visible: 0.5, hidden: 0 }}
+               fadeDuration={1.3}
+               blankDuration={9.7}
+              />
 
-
+              <Slideshow
+               images={rightImages}
+               position={{ top: "77%", left: "58.25%" }}
+               size={{ width: "14vh", height: "21vh" }}
+               opacityLevels={{ visible: 0.57, hidden: 0 }}
+               fadeDuration={1.33}
+               blankDuration={9.3}
+              />
+            </>
+          )}
 
           {/* Chessboard */}
           <div
