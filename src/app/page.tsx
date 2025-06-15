@@ -9,7 +9,7 @@ import Slideshow from "./slideshow";
 import SearchParamsComponent from "./SearchParamsComponent";
 import { useRouter } from "next/navigation";
 
-const socket = io("https://findom-chess.onrender.com");
+const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL);
 
 const ChessGame = () => {
   const router = useRouter();
