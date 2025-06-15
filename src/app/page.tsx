@@ -319,7 +319,7 @@ const ChessGame = () => {
           <button
             onClick={toggleSlideshows}
             style={{
-              padding: "0px 0px",
+              padding: "16px 8px",
               backgroundColor: showSlideshows ? "#ff6b6b" : "#4ecdc4",
               color: "white",
               border: "none",
