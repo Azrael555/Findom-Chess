@@ -297,7 +297,7 @@ const ChessGame = () => {
         display: "flex", 
         flexDirection: "column", 
         alignItems: "center", 
-        height: "100vh", 
+        height: "120vh", 
         justifyContent: "center",
         // NEW: Conditional background based on slideshow visibility
         backgroundColor: shouldShowSlideshows() ? "transparent" : "#2a2a2a"
