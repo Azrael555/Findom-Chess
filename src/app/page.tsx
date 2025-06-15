@@ -3,20 +3,21 @@
 import { useEffect, useState, useRef } from "react";
 import { io } from "socket.io-client";
 import { Chess } from "chess.js";
+import { Suspense } from "react";
 import { Chessboard } from "react-chessboard";
-import { useSearchParams, useRouter } from "next/navigation";
 import Slideshow from "./slideshow";
+import SearchParamsComponent from "./SearchParamsComponent";
+import { useRouter } from "next/navigation";
 
-const socket = io("https://findom-chess.onrender.com");
+const socket = io("http://localhost:5001");
 
 const ChessGame = () => {
-  const searchParams = useSearchParams();
   const router = useRouter();
   const [chess] = useState(new Chess());
   const [fen, setFen] = useState(chess.fen());
-  const [gameId, setGameId] = useState(searchParams.get("gameId") || null);
+  const [gameId, setGameId] = useState(null);
   const [playerColor, setPlayerColor] = useState(null);
-  const [username, setUsername] = useState("User ");
+  const [username, setUsername] = useState("User");
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState("");
   const [gameOver, setGameOver] = useState(null);
@@ -26,8 +27,12 @@ const ChessGame = () => {
   const [typingUser, setTypingUser] = useState("");
   const [fromSquare, setFromSquare] = useState(null); // For click-to-move
   const chatEndRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
 
-  const leftImages = ["/left/left1.jpg", "/left/left2.jpg", "/left/left3.jpg", "/left/left4.jpg", "/left/left5.jpg"];
+  // NEW: State for controlling slideshow visibility (only for white/Goddess)
+  const [showSlideshows, setShowSlideshows] = useState(false);
+
+  const leftImages = ["/left/left1.jpg", "/left/left2.jpg", "/left/left3.jpg", "/left/left4.jpg", "/left/left5.jpg", "/backgrounds/background.gif"];
   const rightImages = ["/right/right1.jpg", "/right/right2.jpg", "/right/right3.jpg", "/right/right4.jpg", "/right/right5.jpg"];
   const [leftImageIndex, setLeftImageIndex] = useState(0);
   const [rightImageIndex, setRightImageIndex] = useState(0);
