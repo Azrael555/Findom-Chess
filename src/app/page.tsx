@@ -92,14 +92,14 @@ const ChessGame = () => {
     socket.on("playerColor", (color) => {
       setPlayerColor(color);
       setUsername(color === "w" ? "Goddess" : "Subject");
-      // NEW: Show slideshows by default for black player, hide for white
+      //  Show slideshows by default for black player, hide for white
       setShowSlideshows(color === "b");
     });
 
     socket.on("spectator", () => {
       setPlayerColor("spectator");
       setUsername(`Spectator ${Math.floor(Math.random() * 1000)}`);
-      // NEW: Show slideshows for spectators
+      // Show slideshows for spectators
       setShowSlideshows(true);
     });
 
@@ -318,7 +318,7 @@ const ChessGame = () => {
           <button
             onClick={toggleSlideshows}
             style={{
-              padding: "8px 16px",
+              padding: "0px 0px",
               backgroundColor: showSlideshows ? "#ff6b6b" : "#4ecdc4",
               color: "white",
               border: "none",
