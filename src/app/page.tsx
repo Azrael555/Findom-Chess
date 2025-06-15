@@ -3,21 +3,20 @@
 import { useEffect, useState, useRef } from "react";
 import { io } from "socket.io-client";
 import { Chess } from "chess.js";
-import { Suspense } from "react";
 import { Chessboard } from "react-chessboard";
+import { useSearchParams, useRouter } from "next/navigation";
 import Slideshow from "./slideshow";
-import SearchParamsComponent from "./SearchParamsComponent";
-import { useRouter } from "next/navigation";
 
 const socket = io("https://findom-chess.onrender.com");
 
 const ChessGame = () => {
+  const searchParams = useSearchParams();
   const router = useRouter();
   const [chess] = useState(new Chess());
   const [fen, setFen] = useState(chess.fen());
-  const [gameId, setGameId] = useState(null);
+  const [gameId, setGameId] = useState(searchParams.get("gameId") || null);
   const [playerColor, setPlayerColor] = useState(null);
-  const [username, setUsername] = useState("User");
+  const [username, setUsername] = useState("User ");
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState("");
   const [gameOver, setGameOver] = useState(null);
@@ -25,15 +24,11 @@ const ChessGame = () => {
   const [kingInCheckSquare, setKingInCheckSquare] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
   const [typingUser, setTypingUser] = useState("");
-  const [fromSquare, setFromSquare] = useState(null);
+  const [fromSquare, setFromSquare] = useState(null); // For click-to-move
   const chatEndRef = useRef(null);
-  const typingTimeoutRef = useRef(null);
 
-  // State for controlling slideshow visibility (only for white/Goddess)
-  const [showSlideshows, setShowSlideshows] = useState(false);
-
-  const leftImages = ["/left/left1.jpg", "/left/left2.gif", "/left/left3.gif", "/left/left4.gif", "/left/left5.gif"];
-  const rightImages = ["/right/right1.gif", "/right/right2.gif", "/right/right3.jpg", "/right/right4.gif", "/right/right5.gif"];
+  const leftImages = ["/left/left1.jpg", "/left/left2.jpg", "/left/left3.jpg", "/left/left4.jpg", "/left/left5.jpg"];
+  const rightImages = ["/right/right1.jpg", "/right/right2.jpg", "/right/right3.jpg", "/right/right4.jpg", "/right/right5.jpg"];
   const [leftImageIndex, setLeftImageIndex] = useState(0);
   const [rightImageIndex, setRightImageIndex] = useState(0);
 
@@ -44,7 +39,7 @@ const ChessGame = () => {
   useEffect(() => {
     const newAudio = new Audio("/audios/audio.mp3");
     newAudio.loop = true;
-    newAudio.volume = 0.001;
+    newAudio.volume = 0.5;
     setAudio(newAudio);
 
     const newCheckAudio = new Audio("/audios/check.mp3");
@@ -74,34 +69,23 @@ const ChessGame = () => {
     };
   }, [audio]);
 
-  // Handle game initialization and joining
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const urlGameId = params.get("gameId");
-
-    if (urlGameId) {
-      setGameId(urlGameId);
-      socket.emit("joinGame", urlGameId);
-    } else {
+    if (!gameId) {
       const newGameId = Math.random().toString(36).substring(2, 10);
       setGameId(newGameId);
       router.push(`/?gameId=${newGameId}`);
-      socket.emit("joinGame", newGameId);
+    } else {
+      socket.emit("joinGame", gameId);
     }
 
-    // Socket event listeners
     socket.on("playerColor", (color) => {
       setPlayerColor(color);
       setUsername(color === "w" ? "Goddess" : "Subject");
-      // Show slideshows by default for black player, hide for white
-      setShowSlideshows(color === "b");
     });
 
     socket.on("spectator", () => {
       setPlayerColor("spectator");
       setUsername(`Spectator ${Math.floor(Math.random() * 1000)}`);
-      // Show slideshows for spectators
-      setShowSlideshows(true);
     });
 
     socket.on("gameState", (newFen) => {
@@ -123,16 +107,16 @@ const ChessGame = () => {
     });
 
     socket.on("typing", (user) => {
-      setTypingUser(user);
-      setIsTyping(true);
+    setTypingUser(user);
+    setIsTyping(true);
 
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current);
-      }
+    // Clear previous timeout before setting a new one
+    if (window.typingTimeout) {
+      clearTimeout(window.typingTimeout);
+    }
 
-      typingTimeoutRef.current = setTimeout(() => {
-        setIsTyping(false);
-      }, 2000);
+    // Hide "is typing" after 2 seconds
+    window.typingTimeout = setTimeout(() => setIsTyping(false), 2000);
     });
 
     return () => {
@@ -143,9 +127,8 @@ const ChessGame = () => {
       socket.off("chatMessage");
       socket.off("typing");
     };
-  }, []);
+  }, [gameId]);
 
-  // Slideshow interval
   useEffect(() => {
     const interval = setInterval(() => {
       setLeftImageIndex((prev) => (prev + 1) % leftImages.length);
@@ -202,14 +185,10 @@ const ChessGame = () => {
       const kingSquare = chess.turn() === "w" ? whiteKingSquare : blackKingSquare;
       setKingInCheckSquare(kingSquare);
 
-      const kingInCheckColor = chess.turn();
-      const opponentColor = kingInCheckColor === "w" ? "b" : "w";
-
-      // Play check sound for BOTH players
-      if (playerColor === kingInCheckColor || playerColor === opponentColor) {  
-        checkAudio?.play()
-        .then(() => console.log("✅ Audio played successfully!"))
-        .catch((error) => console.error("❌ Audio playback failed:", error));
+      if (checkAudio) {
+        checkAudio.play().catch((error) => {
+          console.error("Check audio playback error:", error);
+        });
       }
     } else {
       setKingInCheckSquare(null);
@@ -226,40 +205,38 @@ const ChessGame = () => {
   const handleKeyDown = (event) => {
     if (event.key === "Enter") {
       sendMessage();
-    }
+    } 
   };
 
   const handleTyping = () => {
-    socket.emit("typing", username);
-
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-    }
-
-    typingTimeoutRef.current = setTimeout(() => {
-      setIsTyping(false);
-    }, 2000);
+  socket.emit("typing", username);
   };
 
   const handleSquareClick = (square) => {
-    const piece = chess.get(square);
+  const piece = chess.get(square);
 
-    if (fromSquare === null) {
-      if (piece && piece.color === playerColor) {
-        setFromSquare(square);
-      }
-    } else {
-      if (square === fromSquare) {
-        setFromSquare(null);
-      } else if (piece && piece.color === playerColor) {
-        setFromSquare(square);
-      } else {
-        const move = { from: fromSquare, to: square, promotion: "q" };
-        handleMove(move);
-        setFromSquare(null);
-      }
+  if (fromSquare === null) {
+    // First selection: Ensure the clicked square has a piece of the player's color
+    if (piece && piece.color === playerColor) {
+      setFromSquare(square);
     }
-  };
+  } else {
+    if (square === fromSquare) {
+      // Clicking the same square deselects the piece
+      setFromSquare(null);
+    } else if (piece && piece.color === playerColor) {
+      // Selecting another piece of the same color updates selection
+      setFromSquare(square);
+    } else {
+      // Attempt move through handleMove
+      const move = { from: fromSquare, to: square, promotion: "q" };
+      handleMove(move);
+      setFromSquare(null);
+    }
+  }
+};
+
+
 
   useEffect(() => {
     if (chatEndRef.current) {
@@ -274,60 +251,14 @@ const ChessGame = () => {
     return {};
   };
 
-  // Function to toggle slideshow visibility
-  const toggleSlideshows = () => {
-    setShowSlideshows(!showSlideshows);
-  };
-
-  // Determine if slideshows should be rendered
-  const shouldShowSlideshows = () => {
-    // Always show for black player and spectators
-    if (playerColor === "b" || playerColor === "spectator") return true;
-    // For white player (Goddess), only show if toggle is enabled
-    if (playerColor === "w") return showSlideshows;
-    return false;
-  };
-
   return (
-    <div 
-      style={{ 
-        display: "flex", 
-        flexDirection: "column", 
-        alignItems: "center", 
-        height: "100vh", 
-        justifyContent: "center",
-        backgroundColor: shouldShowSlideshows() ? "transparent" : "#2a2a2a"
-      }}
-    >
-      <Suspense fallback={<p>Loading game...</p>}>
-        <SearchParamsComponent setGameId={setGameId} />
-      </Suspense>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", height: "100vh", justifyContent: "center" }}>
       <div style={{ position: "absolute", top: "10px", textAlign: "center" }}>
         <h2>Online Chess Game</h2>
         <p style={getPlayerColorStyle()}>Game ID: {gameId}</p>
         <p style={getPlayerColorStyle()}>
           You are: {playerColor === "spectator" ? username : playerColor === "w" ? "Goddess" : "Subject"}
         </p>
-        
-        {/* Toggle button for white player only */}
-        {playerColor === "w" && (
-          <button
-            onClick={toggleSlideshows}
-            style={{
-              padding: "8px 16px",
-              backgroundColor: showSlideshows ? "#ff6b6b" : "#4ecdc4",
-              color: "white",
-              border: "none",
-              borderRadius: "5px",
-              cursor: "pointer",
-              marginTop: "10px",
-              fontSize: "12px",
-              fontWeight: "bold"
-            }}
-          >
-            {showSlideshows ? "Hide Slideshows" : "Show Slideshows"}
-          </button>
-        )}
       </div>
 
       {gameOver ? (
@@ -352,121 +283,91 @@ const ChessGame = () => {
         </div>
       ) : (
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-          
-          {/* Conditionally render slideshows */}
-          {shouldShowSlideshows() && (
-            <>
-              {/* Left Slideshow */}
-              <Slideshow
-                images={leftImages}
-                position={{ top: "0%", left: "0%" }}
-                size={{ width: "25vh", height: "37.5vh" }}
-                opacityLevels={{ visible: 0.45, hidden: 0 }}
-                fadeDuration={1.5}
-                blankDuration={10.5}
-              />
+          {/* Left Slideshow */}
+          <Slideshow
+            images={leftImages}
+            position={{ top: "0%", left: "0%" }}
+            size={{ width: "50vh", height: "75vh" }}
+            opacityLevels={{ visible: 1, hidden: 0 }}
+            fadeDuration={3}
+            blankDuration={10}
+          />
 
-              <Slideshow
-                images={leftImages}
-                position={{ top: "20%", left: "17.5%" }}
-                size={{ width: "40vh", height: "60vh" }}
-                opacityLevels={{ visible: 0.55, hidden: 0 }}
-                fadeDuration={1}
-                blankDuration={9.5}
-              />
 
-              <Slideshow
-                images={leftImages}
-                position={{ top: "64%", left: "0%" }}
-                size={{ width: "24vh", height: "36vh" }}
-                opacityLevels={{ visible: 0.7, hidden: 0 }}
-                fadeDuration={1.75}
-                blankDuration={8}
-              />
+           <Slideshow
+            images={rightImages}
+            position={{ top: "0%", right: "0%" }}
+            size={{ width: "50vh", height: "75vh" }}
+            opacityLevels={{ visible: 0, hidden: 0 }}
+            fadeDuration={3}
+            blankDuration={10}
+          />
 
-              <Slideshow
-                images={leftImages}
-                position={{ top: "18.25%", left: "6.25%" }}
-                size={{ width: "42.5vh", height: "63.75vh" }}
-                opacityLevels={{ visible: 0.9, hidden: 0 }}
-                fadeDuration={1.8}
-                blankDuration={5}
-              />
 
-              <Slideshow
-               images={leftImages}
-               position={{ top: "78%", left: "30.25%" }}
-               size={{ width: "15vh", height: "22.5vh" }}
-               opacityLevels={{ visible: 0.5, hidden: 0 }}
-               fadeDuration={1.8}
-               blankDuration={5}
-              />
 
-              <Slideshow
-               images={leftImages}
-               position={{ top: "3%", left: "30.75%" }}
-               size={{ width: "15vh", height: "22.5vh" }}
-               opacityLevels={{ visible: 0.5, hidden: 0 }}
-               fadeDuration={1.8}
-               blankDuration={5}
-              />
+           <Slideshow
+            images={rightImages}
+            position={{ top: "0%", right: "0%" }}
+            size={{ width: "50vh", height: "75vh" }}
+            opacityLevels={{ visible: 0, hidden: 0 }}
+            fadeDuration={3}
+            blankDuration={10}
+          />
 
-              {/* Right Slideshow */}
-              <Slideshow
-                images={rightImages}
-                position={{ top: "0%", left: "86%" }}
-                size={{ width: "28vh", height: "42vh" }}
-                opacityLevels={{ visible: 0.45, hidden: 0 }}
-                fadeDuration={1.43}
-                blankDuration={8.2}
-              />
 
-              <Slideshow
-                images={rightImages}
-                position={{ top: "15%", left: "62%" }}
-                size={{ width: "33vh", height: "49.5vh" }}
-                opacityLevels={{ visible: 0.5, hidden: 0 }}
-                fadeDuration={1.15}
-                blankDuration={7.25}
-              />
+           <Slideshow
+            images={rightImages}
+            position={{ top: "0%", right: "0%" }}
+            size={{ width: "50vh", height: "75vh" }}
+            opacityLevels={{ visible: 0, hidden: 0 }}
+            fadeDuration={3}
+            blankDuration={10}
+          />
 
-              <Slideshow
-                images={rightImages}
-                position={{ top: "63%", left: "80%" }}
-                size={{ width: "20vh", height: "30vh" }}
-                opacityLevels={{ visible: 0.4, hidden: 0 }}
-                fadeDuration={1.75}
-                blankDuration={11}
-              />
 
-              <Slideshow
-                images={rightImages}
-                position={{ top: "18.25%", left: "68%" }}
-                size={{ width: "42.5vh", height: "63.75vh" }}
-                opacityLevels={{ visible: 0.92, hidden: 0 }}
-                fadeDuration={1.75}
-                blankDuration={5.3}
-              />
 
-              <Slideshow
-               images={rightImages}
-               position={{ top: "2.85%", left: "58.25%" }}
-               size={{ width: "14vh", height: "21vh" }}
-               opacityLevels={{ visible: 0.5, hidden: 0 }}
-               fadeDuration={1.3}
-               blankDuration={9.7}
-              />
 
-              <Slideshow
-               images={rightImages}
-               position={{ top: "77%", left: "58.25%" }}
-               size={{ width: "14vh", height: "21vh" }}
-               opacityLevels={{ visible: 0.57, hidden: 0 }}
-               fadeDuration={1.33}
-               blankDuration={9.3}
-              />
-            </>
-          )}
+          {/* Right Slideshow */}
+          <Slideshow
+            images={rightImages}
+            position={{ top: "0%", right: "0%" }}
+            size={{ width: "50vh", height: "75vh" }}
+            opacityLevels={{ visible: 0, hidden: 0 }}
+            fadeDuration={3}
+            blankDuration={10}
+          />
+
+           <Slideshow
+            images={rightImages}
+            position={{ top: "0%", right: "0%" }}
+            size={{ width: "50vh", height: "75vh" }}
+            opacityLevels={{ visible: 0, hidden: 0 }}
+            fadeDuration={3}
+            blankDuration={10}
+          />
+
+           <Slideshow
+            images={rightImages}
+            position={{ top: "0%", right: "0%" }}
+            size={{ width: "50vh", height: "75vh" }}
+            opacityLevels={{ visible: 0, hidden: 0 }}
+            fadeDuration={3}
+            blankDuration={10}
+          />
+
+
+           <Slideshow
+            images={rightImages}
+            position={{ top: "0%", right: "0%" }}
+            size={{ width: "50vh", height: "75vh" }}
+            opacityLevels={{ visible: 0, hidden: 0 }}
+            fadeDuration={3}
+            blankDuration={10}
+          />
+
+
+
+
 
           {/* Chessboard */}
           <div
@@ -532,10 +433,7 @@ const ChessGame = () => {
         <input
           type="text"
           value={message}
-          onChange={(e) => {
-            setMessage(e.target.value);
-            handleTyping();
-          }}
+          onChange={(e) => setMessage(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Type a message..."
           style={{ width: "100%", color: "pink" }}
