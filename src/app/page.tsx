@@ -9,16 +9,7 @@ import Slideshow from "./slideshow";
 import SearchParamsComponent from "./SearchParamsComponent";
 import { useRouter } from "next/navigation";
 
-// Initialize socket with better configuration
-const socket = io("https://findom-chess.onrender.com", {
-  transports: ['websocket', 'polling'], // Fallback to polling if websocket fails
-  timeout: 20000, // 20 second timeout
-  forceNew: true, // Force a new connection
-  reconnection: true,
-  reconnectionDelay: 1000,
-  reconnectionAttempts: 5,
-  maxReconnectionAttempts: 5
-});
+const socket = io("https://findom-chess.onrender.com");
 
 const ChessGame = () => {
   const router = useRouter();
@@ -38,11 +29,7 @@ const ChessGame = () => {
   const chatEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
 
-  // NEW: Connection state tracking
-  const [isConnected, setIsConnected] = useState(false);
-  const [connectionError, setConnectionError] = useState(null);
-
-  // NEW: State for controlling slideshow visibility (only for white/Goddess)
+  // State for controlling slideshow visibility (only for white/Goddess)
   const [showSlideshows, setShowSlideshows] = useState(false);
 
   const leftImages = ["/left/left1.jpg", "/left/left2.gif", "/left/left3.gif", "/left/left4.gif", "/left/left5.gif"];
@@ -87,39 +74,8 @@ const ChessGame = () => {
     };
   }, [audio]);
 
-  // Socket connection management and game initialization
+  // Handle game initialization and joining
   useEffect(() => {
-    // Connection event listeners
-    socket.on('connect', () => {
-      console.log('✅ Connected to server:', socket.id);
-      setIsConnected(true);
-      setConnectionError(null);
-    });
-
-    socket.on('disconnect', (reason) => {
-      console.log('❌ Disconnected from server:', reason);
-      setIsConnected(false);
-      setConnectionError(`Disconnected: ${reason}`);
-    });
-
-    socket.on('connect_error', (error) => {
-      console.error('🚫 Connection error:', error);
-      setIsConnected(false);
-      setConnectionError(`Connection failed: ${error.message}`);
-    });
-
-    socket.on('reconnect', (attemptNumber) => {
-      console.log('🔄 Reconnected after', attemptNumber, 'attempts');
-      setIsConnected(true);
-      setConnectionError(null);
-    });
-
-    socket.on('reconnect_error', (error) => {
-      console.error('🔄❌ Reconnection failed:', error);
-      setConnectionError(`Reconnection failed: ${error.message}`);
-    });
-
-    // Game initialization
     const params = new URLSearchParams(window.location.search);
     const urlGameId = params.get("gameId");
 
@@ -133,30 +89,28 @@ const ChessGame = () => {
       socket.emit("joinGame", newGameId);
     }
 
-    // Game event listeners
+    // Socket event listeners
     socket.on("playerColor", (color) => {
-      console.log('🎮 Assigned player color:', color);
       setPlayerColor(color);
       setUsername(color === "w" ? "Goddess" : "Subject");
+      // Show slideshows by default for black player, hide for white
       setShowSlideshows(color === "b");
     });
 
     socket.on("spectator", () => {
-      console.log('👁️ Joined as spectator');
       setPlayerColor("spectator");
       setUsername(`Spectator ${Math.floor(Math.random() * 1000)}`);
+      // Show slideshows for spectators
       setShowSlideshows(true);
     });
 
     socket.on("gameState", (newFen) => {
-      console.log('♟️ Game state updated:', newFen);
       chess.load(newFen);
       setFen(newFen);
       checkForCheck();
     });
 
     socket.on("gameOver", ({ winner }) => {
-      console.log('🏁 Game over:', winner);
       setGameOver(
         winner === "draw"
           ? "Game Over: Draw"
@@ -165,7 +119,6 @@ const ChessGame = () => {
     });
 
     socket.on("chatMessage", ({ user, text }) => {
-      console.log('💬 Chat message:', user, text);
       setMessages((prev) => [...prev, { user, text }]);
     });
 
@@ -182,13 +135,7 @@ const ChessGame = () => {
       }, 2000);
     });
 
-    // Cleanup function
     return () => {
-      socket.off("connect");
-      socket.off("disconnect");
-      socket.off("connect_error");
-      socket.off("reconnect");
-      socket.off("reconnect_error");
       socket.off("gameState");
       socket.off("playerColor");
       socket.off("spectator");
@@ -258,11 +205,8 @@ const ChessGame = () => {
       const kingInCheckColor = chess.turn();
       const opponentColor = kingInCheckColor === "w" ? "b" : "w";
 
-      console.log("🔍 King in check color:", kingInCheckColor);
-      console.log("🎭 Player color:", playerColor);
-
+      // Play check sound for BOTH players
       if (playerColor === kingInCheckColor || playerColor === opponentColor) {  
-        console.log(`🔊 Playing check sound for ${playerColor.toUpperCase()}!`);
         checkAudio?.play()
         .then(() => console.log("✅ Audio played successfully!"))
         .catch((error) => console.error("❌ Audio playback failed:", error));
@@ -273,7 +217,7 @@ const ChessGame = () => {
   };
 
   const sendMessage = () => {
-    if (message.trim() && isConnected) {
+    if (message.trim()) {
       socket.emit("chatMessage", { gameId, user: username, text: message });
       setMessage("");
     }
@@ -286,9 +230,7 @@ const ChessGame = () => {
   };
 
   const handleTyping = () => {
-    if (isConnected) {
-      socket.emit("typing", username);
-    }
+    socket.emit("typing", username);
 
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
@@ -332,20 +274,18 @@ const ChessGame = () => {
     return {};
   };
 
+  // Function to toggle slideshow visibility
   const toggleSlideshows = () => {
     setShowSlideshows(!showSlideshows);
   };
 
+  // Determine if slideshows should be rendered
   const shouldShowSlideshows = () => {
+    // Always show for black player and spectators
     if (playerColor === "b" || playerColor === "spectator") return true;
+    // For white player (Goddess), only show if toggle is enabled
     if (playerColor === "w") return showSlideshows;
     return false;
-  };
-
-  // Manual reconnection function
-  const handleReconnect = () => {
-    console.log('🔄 Manual reconnection attempt...');
-    socket.connect();
   };
 
   return (
@@ -362,52 +302,8 @@ const ChessGame = () => {
       <Suspense fallback={<p>Loading game...</p>}>
         <SearchParamsComponent setGameId={setGameId} />
       </Suspense>
-      
       <div style={{ position: "absolute", top: "10px", textAlign: "center" }}>
         <h2>Online Chess Game</h2>
-        
-        {/* Connection Status Indicator */}
-        <div style={{ 
-          padding: "5px 10px", 
-          borderRadius: "5px", 
-          marginBottom: "10px",
-          backgroundColor: isConnected ? "#4caf50" : "#f44336",
-          color: "white",
-          fontSize: "12px"
-        }}>
-          {isConnected ? "🟢 Connected" : "🔴 Disconnected"}
-        </div>
-        
-        {/* Connection Error Display */}
-        {connectionError && (
-          <div style={{ 
-            padding: "5px 10px", 
-            borderRadius: "5px", 
-            marginBottom: "10px",
-            backgroundColor: "#ff9800",
-            color: "white",
-            fontSize: "12px",
-            maxWidth: "300px"
-          }}>
-            {connectionError}
-            <button 
-              onClick={handleReconnect}
-              style={{
-                marginLeft: "10px",
-                padding: "2px 8px",
-                fontSize: "10px",
-                backgroundColor: "white",
-                color: "#ff9800",
-                border: "none",
-                borderRadius: "3px",
-                cursor: "pointer"
-              }}
-            >
-              Retry
-            </button>
-          </div>
-        )}
-        
         <p style={getPlayerColorStyle()}>Game ID: {gameId}</p>
         <p style={getPlayerColorStyle()}>
           You are: {playerColor === "spectator" ? username : playerColor === "w" ? "Goddess" : "Subject"}
@@ -641,26 +537,12 @@ const ChessGame = () => {
             handleTyping();
           }}
           onKeyDown={handleKeyDown}
-          placeholder={isConnected ? "Type a message..." : "Connecting..."}
-          disabled={!isConnected}
-          style={{ 
-            width: "100%", 
-            color: isConnected ? "pink" : "#ccc",
-            backgroundColor: isConnected ? "white" : "#f5f5f5"
-          }}
+          placeholder="Type a message..."
+          style={{ width: "100%", color: "pink" }}
         />
         <button
           onClick={sendMessage}
-          disabled={!isConnected}
-          style={{ 
-            width: "100%", 
-            marginTop: "5px", 
-            background: isConnected ? "pink" : "#ccc", 
-            color: isConnected ? "black" : "#666", 
-            border: "none", 
-            padding: "5px",
-            cursor: isConnected ? "pointer" : "not-allowed"
-          }}
+          style={{ width: "100%", marginTop: "5px", background: "pink", color: "black", border: "none", padding: "5px" }}
         >
           Send
         </button>
