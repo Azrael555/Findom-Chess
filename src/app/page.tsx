@@ -29,10 +29,11 @@ const ChessGame = () => {
   const chatEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
 
+  // NEW: State for controlling slideshow visibility (only for white/Goddess)
   const [showSlideshows, setShowSlideshows] = useState(false);
 
-  const leftImages = ["/left/left1.jpg", "/left/left2.gif", "/left/left3.gif", "/left/left4.gif", "/left/left5.gif"];
-  const rightImages = ["/right/right1.gif", "/right/right2.gif", "/right/right3.jpg", "/right/right4.gif", "/right/right5.gif"];
+  const leftImages = ["/left/left1.jpg", "/left/left2.jpg", "/left/left3.jpg", "/left/left4.jpg", "/left/left5.jpg", "/backgrounds/background.gif"];
+  const rightImages = ["/right/right1.jpg", "/right/right2.jpg", "/right/right3.jpg", "/right/right4.jpg", "/right/right5.jpg"];
   const [leftImageIndex, setLeftImageIndex] = useState(0);
   const [rightImageIndex, setRightImageIndex] = useState(0);
 
@@ -43,11 +44,11 @@ const ChessGame = () => {
   useEffect(() => {
     const newAudio = new Audio("/audios/audio.mp3");
     newAudio.loop = true;
-    newAudio.volume = 0.01;
+    newAudio.volume = 0.001;
     setAudio(newAudio);
 
     const newCheckAudio = new Audio("/audios/check.mp3");
-    newCheckAudio.volume = 0.4;
+    newCheckAudio.volume = 1.0;
     setCheckAudio(newCheckAudio);
   }, []);
 
@@ -92,14 +93,14 @@ const ChessGame = () => {
     socket.on("playerColor", (color) => {
       setPlayerColor(color);
       setUsername(color === "w" ? "Goddess" : "Subject");
-      //  Show slideshows by default for black player, hide for white
+      // NEW: Show slideshows by default for black player, hide for white
       setShowSlideshows(color === "b");
     });
 
     socket.on("spectator", () => {
       setPlayerColor("spectator");
       setUsername(`Spectator ${Math.floor(Math.random() * 1000)}`);
-      // Show slideshows for spectators
+      // NEW: Show slideshows for spectators
       setShowSlideshows(true);
     });
 
@@ -301,25 +302,24 @@ const ChessGame = () => {
         justifyContent: "center",
         // NEW: Conditional background based on slideshow visibility
         backgroundColor: shouldShowSlideshows() ? "transparent" : "#2a2a2a"
-        
       }}
     >
       <Suspense fallback={<p>Loading game...</p>}>
         <SearchParamsComponent setGameId={setGameId} />
       </Suspense>
       <div style={{ position: "absolute", top: "10px", textAlign: "center" }}>
-        <h2>Azrael's Chess Game</h2>
+        <h2>Online Chess Game</h2>
         <p style={getPlayerColorStyle()}>Game ID: {gameId}</p>
         <p style={getPlayerColorStyle()}>
           You are: {playerColor === "spectator" ? username : playerColor === "w" ? "Goddess" : "Subject"}
         </p>
         
-        {/*  Toggle button for white player only */}
+        {/* NEW: Toggle button for white player only */}
         {playerColor === "w" && (
           <button
             onClick={toggleSlideshows}
             style={{
-              padding: "12px 8px",
+              padding: "8px 16px",
               backgroundColor: showSlideshows ? "#ff6b6b" : "#4ecdc4",
               color: "white",
               border: "none",
@@ -330,7 +330,7 @@ const ChessGame = () => {
               fontWeight: "bold"
             }}
           >
-            {showSlideshows ? "Hide" : "Show"}
+            {showSlideshows ? "Hide Slideshows" : "Show Slideshows"}
           </button>
         )}
       </div>
