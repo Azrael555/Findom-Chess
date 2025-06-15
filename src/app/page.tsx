@@ -9,7 +9,7 @@ import Slideshow from "./slideshow";
 import SearchParamsComponent from "./SearchParamsComponent";
 import { useRouter } from "next/navigation";
 
-const socket = io("https://56c8-223-178-212-180.ngrok-free.app");
+const socket = io("https://a1ae826b-d039-40fd-814a-77154ddc0106-00-r13j153qke06.pike.replit.dev/");
 
 const ChessGame = () => {
   const router = useRouter();
@@ -44,7 +44,7 @@ const ChessGame = () => {
   useEffect(() => {
     const newAudio = new Audio("/audios/audio.mp3");
     newAudio.loop = true;
-    newAudio.volume = 0.001;
+    newAudio.volume = 0.8;
     setAudio(newAudio);
 
     const newCheckAudio = new Audio("/audios/check.mp3");
