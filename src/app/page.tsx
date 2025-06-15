@@ -301,8 +301,7 @@ const ChessGame = () => {
         justifyContent: "center",
         // NEW: Conditional background based on slideshow visibility
         backgroundColor: shouldShowSlideshows() ? "transparent" : "#2a2a2a"
-        overflow: "hidden", // NEW
-        position: "relative" // NEW
+        
       }}
     >
       <Suspense fallback={<p>Loading game...</p>}>
