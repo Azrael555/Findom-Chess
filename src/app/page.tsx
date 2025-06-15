@@ -9,7 +9,7 @@ import Slideshow from "./slideshow";
 import SearchParamsComponent from "./SearchParamsComponent";
 import { useRouter } from "next/navigation";
 
-const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL);
+const socket = io("https://56c8-223-178-212-180.ngrok-free.app");
 
 const ChessGame = () => {
   const router = useRouter();
