@@ -408,7 +408,7 @@ const ChessGame = () => {
                size={{ width: "15vh", height: "22.5vh" }}
                opacityLevels={{ visible: 0.5, hidden: 0 }}
                fadeDuration={1.8}
-               blankDuration={5}
+               blankDuration={4.5}
               />
 
               <Slideshow
@@ -417,7 +417,7 @@ const ChessGame = () => {
                size={{ width: "15vh", height: "22.5vh" }}
                opacityLevels={{ visible: 0.5, hidden: 0 }}
                fadeDuration={1.8}
-               blankDuration={5}
+               blankDuration={5.75}
               />
 
               {/* Right Slideshow */}
@@ -472,7 +472,7 @@ const ChessGame = () => {
                size={{ width: "14vh", height: "21vh" }}
                opacityLevels={{ visible: 0.57, hidden: 0 }}
                fadeDuration={1.33}
-               blankDuration={9.3}
+               blankDuration={9.1}
               />
             </>
           )}
