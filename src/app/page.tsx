@@ -32,12 +32,12 @@ const ChessGame = () => {
   // NEW: State for controlling slideshow visibility (only for white/Goddess)
   const [showSlideshows, setShowSlideshows] = useState(false);
 
-  const leftImages = ["/left/1.jpg", "/left/2.jpg", "/left/3.jpg", "/left/4.jpg", "/left/5.jpg" ,"/left/6.jpg", "/left/7.jpg", "/left/8.jpg", "/left/9.jpg", "/left/10.jpg" 
-                      "/left/1.gif", "/left/2.gif", "/left/3.gif", "/left/4.gif", "/left/5.gif" , "/left/6.gif", "/left/7.gif", "/left/8.gif", "/left/9.gif", "/left/10.gif" 
+  const leftImages = ["/left/1.jpg", "/left/1.gif",  "/left/2.jpg", "/left/2.gif", "/left/3.jpg","/left/3.gif", "/left/4.jpg",  "/left/4.gif", "/left/5.jpg" ,"/left/5.gif" ,
+                      "/left/6.jpg", "/left/6.gif", "/left/7.jpg", "/left/7.gif", "/left/8.jpg", "/left/8.gif", "/left/9.jpg",  "/left/9.gif", "/left/10.jpg" , "/left/10.gif" 
                      ];
-  const rightImages = ["/right/1.jpg", "/right/2.jpg", "/right/3.jpg", "/right/4.jpg", "/right/5.jpg" ,"/right/6.jpg", "/right/7.jpg", "/right/8.jpg", "/right/9.jpg", "/right/10.jpg" 
-                       "/right/1.gif", "/right/2.gif", "/right/3.gif", "/right/4.gif", "/right/5.gif" , "/right/6.gif", "/right/7.gif", "/right/8.gif", "/right/9.gif", "/right/10.gif" 
-                      ];
+  const rightImages = ["/right/1.jpg","/right/1.gif","/right/2.jpg","/right/2.gif","/right/3.jpg","/right/3.gif","/right/4.jpg","/right/4.gif","/right/5.jpg" ,"/right/5.gif" ,
+                       "/right/6.jpg","/right/6.gif","/right/7.jpg","/right/7.gif","/right/8.jpg","/right/8.gif","/right/9.jpg","/right/9.gif","/right/10.jpg" ,"/right/10.gif" 
+                     ];
   const [leftImageIndex, setLeftImageIndex] = useState(0);
   const [rightImageIndex, setRightImageIndex] = useState(0);
 
